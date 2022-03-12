@@ -7,6 +7,7 @@ import screed
 import csv
 import os
 import shutil
+from sourmash.tax.tax_utils import MultiLineageDB
 
 
 class InputFile(object):
@@ -46,9 +47,21 @@ def main():
     p.add_argument('-o', '--output-csv', required=True)
     p.add_argument('--ident-from-filename', action='store_true',
                    help="determine identifer from filename prefixes")
+    p.add_argument('--names-from-taxonomy', nargs='+')
     args = p.parse_args()
 
-    output_fp = open(args.output_csv, 'wt')
+    get_name = lambda x: x
+    if args.names_from_taxonomy:
+        tax_info = MultiLineageDB.load(args.names_from_taxonomy)
+        def get_name(ident):
+            lineage = tax_info[ident]
+            x = list(lineage)
+            while not x[-1].name:
+                x.pop()
+            name = x[-1].name
+            return name
+
+    output_fp = open(args.output_csv, 'w', newline="")
     w = csv.DictWriter(output_fp, fieldnames=['ident',
                                               'name',
                                               'genome_filename',
@@ -67,19 +80,20 @@ def main():
             record_name = record.name
             break
 
-        if args.ident_from_filename:
+        if not args.ident_from_filename:
             ident, *remainder = record_name.split(' ', 1)
 
             fileinfo.ident = ident
             fileinfo.name = record_name
         else:
             # should use the same approach as genome grist...
-            idents = filename.split('_')
+            basename = os.path.basename(filename)
+            idents = basename.split('_')
             assert len(idents) >= 2
 
             ident = "_".join(idents[:2])
             fileinfo.ident = ident
-            fileinfo.name = ident
+            fileinfo.name = get_name(ident)
 
         if filename.endswith('.faa.gz') or filename.endswith('.faa'):
             fileinfo.protein_filename = filename
