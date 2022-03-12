@@ -48,11 +48,16 @@ def main():
     p.add_argument('--ident-from-filename', action='store_true',
                    help="determine identifer from filename prefixes")
     p.add_argument('--names-from-taxonomy', nargs='+')
+    p.add_argument(
+        '--keep-full-identifiers', action='store_true',
+        help='do not split identifiers on whitespace'
+    )
     args = p.parse_args()
 
     get_name = lambda x: x
     if args.names_from_taxonomy:
-        tax_info = MultiLineageDB.load(args.names_from_taxonomy)
+        tax_info = MultiLineageDB.load(args.names_from_taxonomy,
+                                       keep_full_identifiers=args.keep_full_identifiers)
         def get_name(ident):
             lineage = tax_info[ident]
             x = list(lineage)
@@ -82,6 +87,9 @@ def main():
 
         if not args.ident_from_filename:
             ident, *remainder = record_name.split(' ', 1)
+            if not args.keep_full_identifiers:
+                if '.' in ident:
+                    ident = ident.split('.', 1)[0]
 
             fileinfo.ident = ident
             fileinfo.name = record_name
@@ -92,6 +100,10 @@ def main():
             assert len(idents) >= 2
 
             ident = "_".join(idents[:2])
+            if not args.keep_full_identifiers:
+                if '.' in ident:
+                    ident = ident.split('.', 1)[0]
+
             fileinfo.ident = ident
             fileinfo.name = get_name(ident)
 
