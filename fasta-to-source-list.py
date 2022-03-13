@@ -12,12 +12,14 @@ from sourmash.tax.tax_utils import MultiLineageDB
 
 class InputFile(object):
     ident = None
+    full_ident = None
     moltype = None
     genome_filename = None
     protein_filename = None
 
     def merge(self, other):
         assert self.ident == other.ident
+        assert self.full_ident == other.full_ident
         assert self.name == other.name
         assert not (self.genome_filename and other.genome_filename)
         assert not (self.protein_filename and other.protein_filename)
@@ -35,6 +37,8 @@ class InputFile(object):
         if self.name is None:
             return True
         if self.ident is None:
+            return True
+        if self.full_ident is None:
             return True
         if self.genome_filename is None and self.protein_filename is None:
             return True
@@ -68,6 +72,7 @@ def main():
 
     output_fp = open(args.output_csv, 'w', newline="")
     w = csv.DictWriter(output_fp, fieldnames=['ident',
+                                              'full_ident',
                                               'name',
                                               'genome_filename',
                                               'protein_filename'])
@@ -86,12 +91,15 @@ def main():
             break
 
         if not args.ident_from_filename:
-            ident, *remainder = record_name.split(' ', 1)
+            full_ident, *remainder = record_name.split(' ', 1)
+
+            ident = full_ident
             if not args.keep_full_identifiers:
                 if '.' in ident:
                     ident = ident.split('.', 1)[0]
 
             fileinfo.ident = ident
+            fileinfo.full_ident = full_ident
             fileinfo.name = record_name
         else:
             # should use the same approach as genome grist...
@@ -99,12 +107,14 @@ def main():
             idents = basename.split('_')
             assert len(idents) >= 2
 
-            ident = "_".join(idents[:2])
+            full_ident = "_".join(idents[:2])
+            ident = full_ident
             if not args.keep_full_identifiers:
                 if '.' in ident:
                     ident = ident.split('.', 1)[0]
 
             fileinfo.ident = ident
+            fileinfo.full_ident = full_ident
             fileinfo.name = get_name(ident)
 
         if filename.endswith('.faa.gz') or filename.endswith('.faa'):
@@ -122,6 +132,7 @@ def main():
     for n, (ident, fileinfo) in enumerate(fileinfo_d.items()):
         
         w.writerow(dict(ident=fileinfo.ident,
+                        full_ident=fileinfo.full_ident,
                         name=fileinfo.name,
                         genome_filename=fileinfo.genome_filename or "",
                         protein_filename=fileinfo.protein_filename or ""))
