@@ -42,7 +42,7 @@ def _manifest_row_to_compute_param_obj(row):
     return p
 
 
-def _compute_sigs(to_build, output, *, check_sequence=True):
+def _compute_sigs(to_build, output, *, check_sequence=False):
     "actually build the signatures in 'to_build' and output them to 'output'"
     save_sigs = sourmash_args.SaveSignaturesToLocation(output)
     save_sigs.open()
