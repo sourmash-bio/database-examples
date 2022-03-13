@@ -128,12 +128,10 @@ def main():
 
     notify(f"Loaded {len(already_done)} pre-existing names from manifest(s)")
 
-    # now, create the set of desired sketch specs. @CTB
-    moltype='dna'
+    # now, create the set of desired sketch specs.
     try:
         sig_factory = _signatures_for_sketch_factory(args.param_string,
-                                                     moltype,
-                                                     mult_ksize_by_3=False)
+                                                     None)
     except ValueError as e:
         error(f"Error creating signatures: {str(e)}")
         sys.exit(-1)
