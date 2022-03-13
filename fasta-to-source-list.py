@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 """
+TODO: deal with versioning/accessions better in get_name(...)
 """
 import sys
 import argparse
@@ -82,7 +83,7 @@ def main():
 
     n = 0
     for filename in args.filenames:
-        print(f"processing genome '{filename}'")
+        print(f"processing file '{filename}'")
 
         fileinfo = InputFile()
 
@@ -124,7 +125,10 @@ def main():
 
         previous = fileinfo_d.get(fileinfo.ident)
         if previous is not None:
+            print("(merging into existing record)")
             fileinfo = fileinfo.merge(previous)
+        else:
+            print(f"(new record for name '{fileinfo.name}')")
 
         assert not fileinfo.is_empty(), fileinfo.__dict__
         fileinfo_d[fileinfo.ident] = fileinfo
