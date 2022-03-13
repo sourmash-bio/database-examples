@@ -68,7 +68,7 @@ def main():
             while not x[-1].name:
                 x.pop()
             name = x[-1].name
-            return name
+            return f"{ident} {name}"
 
     output_fp = open(args.output_csv, 'w', newline="")
     w = csv.DictWriter(output_fp, fieldnames=['ident',
