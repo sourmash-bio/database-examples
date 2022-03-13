@@ -2,6 +2,7 @@
 import sys
 import argparse
 import csv
+import os
 from collections import defaultdict
 
 import screed
@@ -16,7 +17,8 @@ from sourmash import sourmash_args
 from sourmash.signature import SourmashSignature
 
 
-def manifest_row_to_compute_param_obj(row):
+def _manifest_row_to_compute_param_obj(row):
+    "convert a row from a manifest into a ComputeParameters object"
     is_dna = is_protein = is_dayhoff = is_hp = False
     if row['moltype'] == 'DNA':
         is_dna = True
@@ -29,24 +31,24 @@ def manifest_row_to_compute_param_obj(row):
     else:
         assert 0
 
-    p = ComputeParameters([row['ksize']], 42,
-                          is_protein, is_dayhoff, is_hp, is_dna,
-                          row['num'], row['with_abundance'],
-                          row['scaled'])
+    if is_dna:
+        ksize = row['ksize']
+    else:
+        ksize = row['ksize'] * 3
+
+    p = ComputeParameters([ksize], 42, is_protein, is_dayhoff, is_hp, is_dna,
+                          row['num'], row['with_abundance'], row['scaled'])
 
     return p
 
 
-def _compute_sigs(to_build, output):
-    # this is where output signatures will go.
+def _compute_sigs(to_build, output, *, check_sequence=True):
+    "actually build the signatures in 'to_build' and output them to 'output'"
     save_sigs = sourmash_args.SaveSignaturesToLocation(output)
     save_sigs.open()
 
     for (name, filename), param_objs in to_build.items():
-
-        #
-        # calculate signatures!
-        #
+        assert param_objs
 
         # now, set up to iterate over sequences.
         with screed.open(filename) as screed_iter:
@@ -54,21 +56,26 @@ def _compute_sigs(to_build, output):
                 notify(f"no sequences found in '{filename}'?!")
                 continue
 
-            # @CTB
+            # build the set of empty sigs
             sigs = []
+
+            is_dna = param_objs[0].dna
             for p in param_objs:
+                if p.dna: assert is_dna
                 sig = SourmashSignature.from_params(p)
                 sigs.append(sig)
 
-            # consume & calculate signatures
+            input_is_protein = not is_dna
+
+            # read sequence records & sketch
             notify('... reading sequences from {}', filename)
             for n, record in enumerate(screed_iter):
                 if n % 10000 == 0:
                     if n:
                         notify('\r...{} {}', filename, n, end='')
 
-                add_seq(sigs, record.sequence, False, False) # @CTB
-#                        args.input_is_protein, args.check_sequence) # @CTB
+                add_seq(sigs, record.sequence, input_is_protein,
+                        check_sequence)
 
             notify('...{} {} sequences', filename, n, end='')
 
@@ -100,7 +107,15 @@ def main():
         help='signature license. Currently only CC0 is supported.'
     )
     p.add_argument('--already-done', nargs='+', default=[])
+    p.add_argument('--force-output-already-exists', action='store_true')
     args = p.parse_args()
+
+    if os.path.exists(args.output):
+        if not args.force_output_already_exists:
+            error(f"** ERROR: output location '{args.output}' already exists!")
+            error(f"** Not overwriting/appending.")
+            error(f"** Use --force-output-already-exists if you want to overwrite/append.")
+            sys.exit(-1)
 
     # load manifests from '--already-done' databases => turn into
     # ComputeParameters objects, indexed by name.
@@ -116,22 +131,22 @@ def main():
 
         # for each manifest row,
         for row in manifest.rows:
-            if not row['name']:
+            name = row['name']
+            if not name:
                 continue
 
-            # build a compute param object
-            name = row['name']
-            p = manifest_row_to_compute_param_obj(row)
+            # build a ComputeParameters object for later comparison
+            p = _manifest_row_to_compute_param_obj(row)
 
-            # save into lists, retrievable by name.
+            # add to list for this name
             already_done[name].append(p)
 
     notify(f"Loaded {len(already_done)} pre-existing names from manifest(s)")
 
     # now, create the set of desired sketch specs.
     try:
-        sig_factory = _signatures_for_sketch_factory(args.param_string,
-                                                     None)
+        # omit a default moltype - must be provided in param string.
+        sig_factory = _signatures_for_sketch_factory(args.param_string, None)
     except ValueError as e:
         error(f"Error creating signatures: {str(e)}")
         sys.exit(-1)
