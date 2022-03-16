@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 """
-Summarize a bunch of GenBank-style FASTA files into 'sourmash sketch fromfile'
-format for batch processing.
+Summarize many GenBank-style FASTA files for 'sourmash sketch fromfile'
 """
 import sys
 import argparse
@@ -14,15 +13,40 @@ from kiln import InputFile, OutputRecords
 from sourmash.tax.tax_utils import MultiLineageDB
 from sourmash.logging import error, notify
 
+usage = """
+
+
+   ./genbank-to-fromfile.py filenames -o <out.csv> -t <taxonomy db>
+"""
+
 
 def main():
-    p = argparse.ArgumentParser()
-    p.add_argument('filenames', nargs='+')
-    p.add_argument('-o', '--output-csv', required=True)
+    p = argparse.ArgumentParser(description=__doc__, usage=usage)
+    p.add_argument('filenames', nargs='*')
+    p.add_argument('-F', '--file-list', action='append',
+                   help='list of filenames to add to command line',)
+    p.add_argument('-o', '--output-csv', required=True,
+                   help="output CSV file")
     p.add_argument('-t', '--taxonomy-db', action='append', default=[],
-                   required=True)
+                   required=True,
+                   help="one or more sourmash taxonomy database(s)")
     args = p.parse_args()
 
+    if not args.filenames:
+        args.filenames = []
+
+    # load --file-list
+    if args.file_list:
+        with open(args.file_list, 'rt') as fp:
+            filelist = [ x.strip() for x in fp ]
+        notify(f"Loaded {len(filelist)} entries from '{args.file_list}'")
+        args.filenames.extend(filelist)
+
+    if not args.filenames:
+        error("** ERROR: no input filenames and no --file-list provided.")
+        sys.exit(-1)
+
+    # load taxonomy ID
     tax_info = MultiLineageDB.load(args.taxonomy_db,
                                    keep_full_identifiers=False)
     def get_name(ident, full_ident):
@@ -45,7 +69,7 @@ def main():
     output = OutputRecords(args.output_csv)
     output.open()
 
-    # track Inputfile objects by name -
+    # track Inputfile objects by name:
     fileinfo_d = {}
 
     n = 0
