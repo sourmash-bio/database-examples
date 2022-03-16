@@ -30,6 +30,8 @@ def main():
     p.add_argument('-t', '--taxonomy-db', action='append', default=[],
                    required=True,
                    help="one or more sourmash taxonomy database(s)")
+    p.add_argument('-v', '--verbose',
+                   help='turn on more extensive output')
     args = p.parse_args()
 
     if not args.filenames:
@@ -40,7 +42,7 @@ def main():
         for ff in args.file_list:
             with open(ff, 'rt') as fp:
                 filelist = [ x.strip() for x in fp ]
-            notify(f"Loaded {len(filelist)} entries from '{args.file_list}'")
+            notify(f"Loaded {len(filelist)} entries from '{ff}'")
         args.filenames.extend(filelist)
 
     if not args.filenames:
@@ -74,8 +76,10 @@ def main():
     fileinfo_d = {}
 
     n = 0
-    for filename in args.filenames:
-        print(f"processing file '{filename}'")
+    total = len(args.filenames)
+    for n, filename in enumerate(args.filenames):
+        basename = os.path.basename(filename)
+        notify(f"processing file '{basename}' ({n}/{total})", end='\r')
 
         if os.path.getsize(filename) == 0:
             error(f"** ERROR: '{filename}' has zero size.")
@@ -85,7 +89,6 @@ def main():
 
         # split filenames of the format 'GCF_003317655.1_genomic.fna.gz'
         # into identifier 'GCF_003317655.1' and discard the rest.
-        basename = os.path.basename(filename)
         idents = basename.split('_')
         assert len(idents) >= 2
 
@@ -111,10 +114,12 @@ def main():
         # the other moltype now. ('merge' will check.)
         previous = fileinfo_d.get(fileinfo.ident)
         if previous is not None:
-            print("(merging into existing record)")
+            if args.verbose:
+                notify("(merging into existing record)")
             fileinfo = fileinfo.merge(previous)
         else:
-            print(f"(new record for name '{fileinfo.name}')")
+            if args.verbose:
+                notify(f"(new record for name '{fileinfo.name}')")
 
         # double check & save
         assert not fileinfo.is_empty(), fileinfo.__dict__
@@ -125,8 +130,10 @@ def main():
         output.write_record(fileinfo)
 
     output.close()
-    print('---')
-    print(f"wrote {len(fileinfo_d)} entries to '{args.output_csv}'")
+
+    notify(f"processed {total} files.")
+    notify('---')
+    notify(f"wrote {len(fileinfo_d)} entries to '{args.output_csv}'")
 
     return 0
 
