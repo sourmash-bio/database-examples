@@ -14,6 +14,7 @@ from sourmash.tax.tax_utils import MultiLineageDB
 from sourmash.logging import error, notify
 from sourmash.cli.utils import add_picklist_args
 from sourmash import sourmash_args
+from sourmash.picklist import PickStyle
 
 
 usage = """
@@ -55,9 +56,31 @@ def main():
 
     # load/process picklists
     picklist = sourmash_args.load_picklist(args)
+    keep_ident = lambda ident, full_ident: True
     if picklist and picklist.coltype not in ('ident', 'identprefix'):
         error("** ERROR: picklist can only use 'ident' or 'identprefix' here.")
         sys.exit(-1)
+    elif picklist:
+
+        # code taken from sourmash, src/sourmash/picklist.py:
+        def include_ident(full_ident):
+            q = full_ident
+            # mangle into the kinds of values we support here
+            q = picklist.preprocess_fn(q)
+
+            # add to the number of queries performed,
+            picklist.n_queries += 1
+
+            # determine if ok or not.
+            if picklist.pickstyle == PickStyle.INCLUDE:
+                if q in picklist.pickset:
+                    picklist.found.add(q)
+                    return True
+            elif picklist.pickstyle == PickStyle.EXCLUDE:
+                if q not in picklist.pickset:
+                    picklist.found.add(q)
+                    return True
+            return False
 
     # load taxonomy ID
     tax_info = MultiLineageDB.load(args.taxonomy_db,
@@ -106,6 +129,10 @@ def main():
         # tax lookup.
         full_ident = "_".join(idents[:2])
         assert full_ident.startswith('GCA_') or full_ident.startswith('GCF_')
+
+        if not include_ident(full_ident):
+            continue
+
         ident = full_ident
         if '.' in ident:
             ident = ident.split('.', 1)[0]
