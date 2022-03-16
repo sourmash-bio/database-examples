@@ -9,8 +9,10 @@ import screed
 import csv
 import os
 import shutil
-from sourmash.tax.tax_utils import MultiLineageDB
 from kiln import InputFile, OutputRecords
+
+from sourmash.tax.tax_utils import MultiLineageDB
+from sourmash.logging import error, notify
 
 
 def main():
