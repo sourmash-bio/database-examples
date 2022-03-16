@@ -56,12 +56,11 @@ def main():
 
     # load/process picklists
     picklist = sourmash_args.load_picklist(args)
-    keep_ident = lambda ident, full_ident: True
+    include_ident = lambda full_ident: True
     if picklist and picklist.coltype not in ('ident', 'identprefix'):
         error("** ERROR: picklist can only use 'ident' or 'identprefix' here.")
         sys.exit(-1)
     elif picklist:
-
         # code taken from sourmash, src/sourmash/picklist.py:
         def include_ident(full_ident):
             q = full_ident
