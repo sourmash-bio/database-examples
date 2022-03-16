@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 """
-TODO: deal with versioning/accessions better in get_name(...)
 """
 import sys
 import argparse
@@ -14,11 +13,28 @@ from kiln import InputFile, OutputRecords, check_dna, remove_extension
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument('filenames', nargs='+')
+    p.add_argument('filenames', nargs='*', help="names of files to process")
+    p.add_argument('-F', '--file-list', action='append',
+                   help='text files with filenames to add to command line',)
     p.add_argument('-o', '--output-csv', required=True)
     p.add_argument('--ident-from-filename', action='store_true',
                    help="determine identifer from filename prefixes")
     args = p.parse_args()
+
+    if not args.filenames:
+        args.filenames = []
+
+    # load --file-list
+    if args.file_list:
+        for ff in args.file_list:
+            with open(ff, 'rt') as fp:
+                filelist = [ x.strip() for x in fp ]
+            notify(f"Loaded {len(filelist)} entries from '{ff}'")
+        args.filenames.extend(filelist)
+
+    if not args.filenames:
+        error("** ERROR: no input filenames and no --file-list provided.")
+        sys.exit(-1)
 
     output = OutputRecords(args.output_csv)
     output.open()

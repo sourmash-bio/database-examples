@@ -22,9 +22,9 @@ usage = """
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, usage=usage)
-    p.add_argument('filenames', nargs='*')
+    p.add_argument('filenames', nargs='*', help="names of files to process")
     p.add_argument('-F', '--file-list', action='append',
-                   help='list of filenames to add to command line',)
+                   help='text files with filenames to add to command line',)
     p.add_argument('-o', '--output-csv', required=True,
                    help="output CSV file")
     p.add_argument('-t', '--taxonomy-db', action='append', default=[],
