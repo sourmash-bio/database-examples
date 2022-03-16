@@ -37,9 +37,10 @@ def main():
 
     # load --file-list
     if args.file_list:
-        with open(args.file_list, 'rt') as fp:
-            filelist = [ x.strip() for x in fp ]
-        notify(f"Loaded {len(filelist)} entries from '{args.file_list}'")
+        for ff in args.file_list:
+            with open(ff, 'rt') as fp:
+                filelist = [ x.strip() for x in fp ]
+            notify(f"Loaded {len(filelist)} entries from '{args.file_list}'")
         args.filenames.extend(filelist)
 
     if not args.filenames:
