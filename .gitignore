@@ -1,3 +1,7 @@
 *.csv
 *~
 .DS_Store
+__pycache__
+*.zip
+*.db
+*.sig
