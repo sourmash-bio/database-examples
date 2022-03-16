@@ -7,9 +7,10 @@ import screed
 import csv
 import os
 import shutil
-from sourmash.tax.tax_utils import MultiLineageDB
 from kiln import InputFile, OutputRecords, check_dna, remove_extension
 
+from sourmash.tax.tax_utils import MultiLineageDB
+from sourmash.logging import notify, error
 
 def main():
     p = argparse.ArgumentParser()

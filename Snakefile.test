@@ -21,11 +21,12 @@ rule test_genbank:
 rule test_fasta_1:
      input:
         script = "fasta-to-fromfile.py",
+        filelist = "podar-list.txt",
         taxonomy = "gtdb-rs202.taxonomy.v2.db"
      output:
         csv = "test-fasta-1.csv"
      shell: """
-        ./fasta-to-fromfile.py podar-ref/[12].fa -o {output.csv}
+        ./fasta-to-fromfile.py -F podar-list.txt -o {output.csv}
         sourmash sketch fromfile {output.csv} --output-commands - \
               -p dna
      """
