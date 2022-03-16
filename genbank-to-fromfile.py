@@ -12,6 +12,9 @@ from kiln import InputFile, OutputRecords
 
 from sourmash.tax.tax_utils import MultiLineageDB
 from sourmash.logging import error, notify
+from sourmash.cli.utils import add_picklist_args
+from sourmash import sourmash_args
+
 
 usage = """
 
@@ -32,6 +35,7 @@ def main():
                    help="one or more sourmash taxonomy database(s)")
     p.add_argument('-v', '--verbose',
                    help='turn on more extensive output')
+    add_picklist_args(p)
     args = p.parse_args()
 
     if not args.filenames:
@@ -47,6 +51,12 @@ def main():
 
     if not args.filenames:
         error("** ERROR: no input filenames and no --file-list provided.")
+        sys.exit(-1)
+
+    # load/process picklists
+    picklist = sourmash_args.load_picklist(args)
+    if picklist and picklist.coltype not in ('ident', 'identprefix'):
+        error("** ERROR: picklist can only use 'ident' or 'identprefix' here.")
         sys.exit(-1)
 
     # load taxonomy ID
@@ -134,6 +144,9 @@ def main():
     notify(f"processed {total} files.")
     notify('---')
     notify(f"wrote {len(fileinfo_d)} entries to '{args.output_csv}'")
+
+    if picklist:
+        sourmash_args.report_picklist(args, picklist)
 
     return 0
 

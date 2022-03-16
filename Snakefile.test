@@ -2,7 +2,8 @@ rule all:
      input:
         "test-genbank.csv",
         "test-fasta-1.csv",
-        "test-fasta-2.csv"
+        "test-fasta-2.csv",
+        "test-genbank-pick.csv"
 
 rule test_genbank:
      input:
@@ -14,6 +15,21 @@ rule test_genbank:
      shell: """
         ./genbank-to-fromfile.py -F {input.filelist} -o {output.csv} \
               -t {input.taxonomy}
+        sourmash sketch fromfile {output.csv} --output-commands - \
+              -p dna -p protein
+     """
+
+rule test_genbank_2_picklist:
+     input:
+        script = "genbank-to-fromfile.py",
+        filelist = "ncbi-assemblies.txt",
+        picklist = "ncbi-picklist.csv",
+        taxonomy = "gtdb-rs202.taxonomy.v2.db"
+     output:
+        csv = "test-genbank-pick.csv"
+     shell: """
+        ./genbank-to-fromfile.py -F {input.filelist} -o {output.csv} \
+              -t {input.taxonomy} --picklist ncbi-picklist.csv:ident:ident
         sourmash sketch fromfile {output.csv} --output-commands - \
               -p dna -p protein
      """
