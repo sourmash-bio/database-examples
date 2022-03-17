@@ -52,7 +52,7 @@ def main():
             with open(ff, 'rt') as fp:
                 filelist = [ x.strip() for x in fp ]
             notify(f"Loaded {len(filelist)} entries from '{ff}'")
-        args.filenames.extend(filelist)
+            args.filenames.extend(filelist)
 
     if not args.filenames:
         error("** ERROR: no input filenames and no --file-list provided.")
@@ -134,6 +134,7 @@ def main():
             print(f"zero size: {filename}", file=report_fp)
             if args.verbose:
                 error(f"** SKIPPING: '{basename}' has zero size.")
+            continue
 
         fileinfo = InputFile()
 
