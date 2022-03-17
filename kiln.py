@@ -59,8 +59,11 @@ class InputFile(object):
         assert self.ident == other.ident
         assert self.full_ident == other.full_ident
         assert self.name == other.name
-        assert not (self.genome_filename and other.genome_filename)
-        assert not (self.protein_filename and other.protein_filename)
+
+        if (self.genome_filename and other.genome_filename):
+            raise ValueError("duplicate genome filename")
+        if (self.protein_filename and other.protein_filename):
+            raise ValueError("duplicate protein filename")
 
         if self.genome_filename:
             assert other.protein_filename

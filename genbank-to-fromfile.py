@@ -34,8 +34,12 @@ def main():
     p.add_argument('-t', '--taxonomy-db', action='append', default=[],
                    required=True,
                    help="one or more sourmash taxonomy database(s)")
-    p.add_argument('-v', '--verbose',
+    p.add_argument('-v', '--verbose', action='store_true',
                    help='turn on more extensive output')
+    p.add_argument('--strict', action='store_true',
+                   help='turn on strict success mode')
+    p.add_argument('-R', '--report-errors-to',
+                   help='output errors to this file; default <csv>.report.txt')
     add_picklist_args(p)
     args = p.parse_args()
 
@@ -104,6 +108,18 @@ def main():
     output = OutputRecords(args.output_csv)
     output.open()
 
+    # report file
+    report_filename = args.output_csv + '.error-report.txt'
+    if args.report_errors_to:
+        report_filename = args.report_errors_to
+    notify(f"Any survivable errors will be reported to '{report_filename}'")
+    report_fp = open(report_filename, "wt")
+
+    num_files_zero_size = 0
+    num_duplicate_inputs = 0
+
+    ### begin processing
+
     # track Inputfile objects by name:
     fileinfo_d = {}
 
@@ -114,8 +130,10 @@ def main():
         notify(f"processing file '{basename}' ({n}/{total})", end='\r')
 
         if os.path.getsize(filename) == 0:
-            error(f"** ERROR: '{filename}' has zero size.")
-            sys.exit(-1)
+            num_files_zero_size += 1
+            print(f"zero size: {filename}", file=report_fp)
+            if args.verbose:
+                error(f"** SKIPPING: '{basename}' has zero size.")
 
         fileinfo = InputFile()
 
@@ -152,7 +170,16 @@ def main():
         if previous is not None:
             if args.verbose:
                 notify("(merging into existing record)")
-            fileinfo = fileinfo.merge(previous)
+
+            try:
+                fileinfo = fileinfo.merge(previous)
+            except ValueError as exc:
+                num_duplicate_inputs += 1
+                print(f"{str(exc)}: {filename}", file=report_fp)
+                if args.verbose:
+                    error(f"** SKIPPING: '{basename}' is duplicate.")
+                continue
+
         else:
             if args.verbose:
                 notify(f"(new record for name '{fileinfo.name}')")
@@ -162,7 +189,15 @@ def main():
         fileinfo_d[fileinfo.ident] = fileinfo
 
     # write the things!
+    num_genome_only = 0
+    num_protein_only = 0
     for n, (ident, fileinfo) in enumerate(fileinfo_d.items()):
+        if not fileinfo.protein_filename:
+            num_protein_only += 1
+            print(f"missing protein file: {ident}", file=report_fp)
+        if not fileinfo.genome_filename:
+            num_genome_only += 1
+            print(f"missing genome file: {ident}", file=report_fp)
         output.write_record(fileinfo)
 
     output.close()
@@ -171,8 +206,51 @@ def main():
     notify('---')
     notify(f"wrote {len(fileinfo_d)} entries to '{args.output_csv}'")
 
+    if num_protein_only:
+        notify(f"{num_protein_only} entries had only protein (and no genome) files.")
+    if num_genome_only:
+        notify(f"{num_genome_only} entries had only genome (and no protein) files.")
+    if num_protein_only == 0 and num_genome_only == 0:
+        notify("all entries had matched genome and protein files!")
+    else:
+        if args.strict:
+            pass
+        else:
+            notify("(missing files do not cause error exit without --strict)")
+
+    ## report on any errors
+
+    is_problem = False
+
+    # zero size files?
+    if num_files_zero_size:
+        notify(f"{num_files_zero_size} files had no content (zero size).")
+        is_problem = True
+
+    # duplicate inputs?
+    if num_duplicate_inputs:
+        notify(f"{num_duplicate_inputs} filenames yielded duplicate identifiers.")
+        is_problem = True
+
+    # not found all pickvals?
     if picklist:
-        sourmash_args.report_picklist(args, picklist)
+        if picklist.pickstyle == PickStyle.INCLUDE:
+            notify(f"for given picklist, found {len(picklist.found)} matches to {len(picklist.pickset)} distinct values")
+            missing_picklist = picklist.pickset - picklist.found
+            n_missing = len(missing_picklist)
+
+            notify(f"ERROR: {n_missing} picklist values not found.")
+            for value in missing_picklist:
+                print(f"missing picklist value: {value}", file=report_fp)
+
+            is_problem = True
+        elif picklist.pickstyle == PickStyle.EXCLUDE:
+            notify(f"for given picklist, found {len(picklist.found)} matches by excluding {len(picklist.pickset)} distinct values")
+            n_missing = 0
+
+    if is_problem:
+        error(f"** Errors were encountered ;(. See details in '{report_filename}'.")
+        return -1
 
     return 0
 
