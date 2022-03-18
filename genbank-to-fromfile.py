@@ -240,11 +240,12 @@ def main():
             missing_picklist = picklist.pickset - picklist.found
             n_missing = len(missing_picklist)
 
-            notify(f"ERROR: {n_missing} picklist values not found.")
-            for value in missing_picklist:
-                print(f"missing picklist value: {value}", file=report_fp)
+            if n_missing:
+                notify(f"ERROR: {n_missing} picklist values not found.")
+                is_problem = True
+                for value in missing_picklist:
+                    print(f"missing picklist value: {value}", file=report_fp)
 
-            is_problem = True
         elif picklist.pickstyle == PickStyle.EXCLUDE:
             notify(f"for given picklist, found {len(picklist.found)} matches by excluding {len(picklist.pickset)} distinct values")
             n_missing = 0
