@@ -45,7 +45,10 @@ def massrename(args):
     rename_set = set(rename_d)
 
     # build a new picklist for just the idents
-    ident_picklist = SignaturePicklist('ident')
+    if args.strip_identifier_versions:
+        ident_picklist = SignaturePicklist('identprefix')
+    else:
+        ident_picklist = SignaturePicklist('ident')
     ident_picklist.pickset = rename_set
 
     # go through all the database and load etc.
@@ -102,6 +105,9 @@ def main():
         '-f', '--force', action='store_true',
         help='try to load all files as signatures'
     )
+    p.add_argument('--strip-identifier-versions',
+                   help='use only the identifier prefix (w/o version) for matching',
+                   action='store_true')
     p.add_argument('-F', '--from-spreadsheet',
                    required=True,
                    help="input spreadsheet containing 'ident' and 'name' columns")
