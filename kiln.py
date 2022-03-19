@@ -1,3 +1,7 @@
+"""
+CTB TODO: change ident to identprefix, full_ident to ident.
+"""
+
 import csv
 import os
 
@@ -30,8 +34,8 @@ class OutputRecords:
     def open(self):
         self.fp = open(self.filename, 'w', newline='')
         self.writer = csv.DictWriter(self.fp,
-                                     fieldnames=['ident',
-                                                 'full_ident',
+                                     fieldnames=['identprefix',
+                                                 'ident',
                                                  'name',
                                                  'genome_filename',
                                                  'protein_filename'])
@@ -86,8 +90,8 @@ class InputFile(object):
         return False
 
     def to_csv(self, w):
-        w.writerow(dict(ident=self.ident,
-                        full_ident=self.full_ident,
+        w.writerow(dict(identprefix=self.ident,
+                        ident=self.full_ident,
                         name=self.name,
                         genome_filename=self.genome_filename or "",
                         protein_filename=self.protein_filename or ""))
