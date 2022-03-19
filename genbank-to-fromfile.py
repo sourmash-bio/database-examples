@@ -52,7 +52,7 @@ def main():
             with open(ff, 'rt') as fp:
                 filelist = [ x.strip() for x in fp ]
             notify(f"Loaded {len(filelist)} entries from '{ff}'")
-        args.filenames.extend(filelist)
+            args.filenames.extend(filelist)
 
     if not args.filenames:
         error("** ERROR: no input filenames and no --file-list provided.")
@@ -134,6 +134,7 @@ def main():
             print(f"zero size: {filename}", file=report_fp)
             if args.verbose:
                 error(f"** SKIPPING: '{basename}' has zero size.")
+            continue
 
         fileinfo = InputFile()
 
@@ -239,11 +240,12 @@ def main():
             missing_picklist = picklist.pickset - picklist.found
             n_missing = len(missing_picklist)
 
-            notify(f"ERROR: {n_missing} picklist values not found.")
-            for value in missing_picklist:
-                print(f"missing picklist value: {value}", file=report_fp)
+            if n_missing:
+                notify(f"ERROR: {n_missing} picklist values not found.")
+                is_problem = True
+                for value in missing_picklist:
+                    print(f"missing picklist value: {value}", file=report_fp)
 
-            is_problem = True
         elif picklist.pickstyle == PickStyle.EXCLUDE:
             notify(f"for given picklist, found {len(picklist.found)} matches by excluding {len(picklist.pickset)} distinct values")
             n_missing = 0
