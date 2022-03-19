@@ -78,8 +78,12 @@ def massrename(args):
 
     # go through, do rename, save.
     with sourmash_args.SaveSignaturesToLocation(args.output) as save_sigs:
+        n = 0
         for idx in idx_list:
             for ss in idx.signatures():
+                n += 1
+                if n % 1000 == 0:
+                    notify(f"...at signature {n}", end="\r")
                 ident = ss.name.split(' ')[0]
                 new_name = rename_d[ident]
                 ss._name = new_name
