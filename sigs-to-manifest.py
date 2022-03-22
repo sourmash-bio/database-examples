@@ -15,12 +15,15 @@ def main():
 
     rows = []
     for filename in args.pathlist:
+        notify(f"Loading filenames from {filename}.")
         n_loaded = 0
         with open(filename, 'rt') as fp:
             for loc in fp:
                 loc = loc.strip()
 
                 for ss in sourmash.load_file_as_signatures(loc):
+                    if n_loaded % 100 == 0:
+                        notify(f'... {n_loaded}', end='\r')
                     row = CollectionManifest.make_manifest_row(ss,
                                                                loc,
                                                                include_signature=False)
