@@ -11,7 +11,18 @@ def main():
     p.add_argument('pathlist', nargs='+')
     p.add_argument('-o', '--output', help='manifest output file',
                    required=True)
+    p.add_argument('--previous', help='previous manifest file')
     args = p.parse_args()
+
+    previous_filenames = set()
+    if args.previous:
+        with open(args.previous, newline='') as fp:
+            previous = CollectionManifest.load_from_csv(fp)
+
+        for row in previous.rows:
+            previous_filenames.add(row['internal_location'])
+
+        notify(f"loaded {len(previous)} rows with {len(previous_filenames)} distinct sig files from '{args.previous}'")
 
     rows = []
     for filename in args.pathlist:
@@ -20,6 +31,8 @@ def main():
         with open(filename, 'rt') as fp:
             for loc in fp:
                 loc = loc.strip()
+                if loc in previous_filenames:
+                    continue
 
                 for ss in sourmash.load_file_as_signatures(loc):
                     if n_loaded % 100 == 0:
