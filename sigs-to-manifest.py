@@ -12,6 +12,8 @@ def main():
     p.add_argument('-o', '--output', help='manifest output file',
                    required=True)
     p.add_argument('--previous', help='previous manifest file')
+    p.add_argument('--merge-previous', action='store_true',
+                   help='merge previous and new manifests')
     args = p.parse_args()
 
     previous_filenames = set()
@@ -45,9 +47,15 @@ def main():
 
         notify(f"Loaded {n_loaded} sigs => manifest from {filename}")
 
+    if args.merge_previous:
+        notify(f"merging {len(previous.rows)} previous rows into current.")
+        rows.extend(previous.rows)
+
     m = CollectionManifest(rows)
     with open(args.output, 'w', newline='') as outfp:
         m.write_to_csv(outfp, write_header=True)
+
+    notify(f"saved {len(m)} manifest rows to '{args.output}'")
 
     return 0
 
