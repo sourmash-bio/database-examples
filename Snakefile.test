@@ -5,6 +5,7 @@ rule all:
         "test-fasta-2.csv",
         "test-genbank-pick.csv",
         "test-genbank.mf.csv",
+        "test-genbank.zip"
 
 rule test_genbank:
      input:
