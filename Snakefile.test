@@ -3,7 +3,8 @@ rule all:
         "test-genbank.csv",
         "test-fasta-1.csv",
         "test-fasta-2.csv",
-        "test-genbank-pick.csv"
+        "test-genbank-pick.csv",
+        "test-genbank.mf.csv",
 
 rule test_genbank:
      input:
@@ -11,11 +12,12 @@ rule test_genbank:
         filelist = "ncbi-assemblies.txt",
         taxonomy = "gtdb-rs202.taxonomy.v2.db"
      output:
-        csv = "test-genbank.csv"
+        csv = "test-genbank.csv",
+        zip = "test-genbank.zip",
      shell: """
         ./genbank-to-fromfile.py -F {input.filelist} -o {output.csv} \
               -t {input.taxonomy}
-        sourmash sketch fromfile {output.csv} --output-commands - \
+        sourmash sketch fromfile {output.csv} -o {output.zip} \
               -p dna -p protein
      """
 
@@ -30,8 +32,20 @@ rule test_genbank_2_picklist:
      shell: """
         ./genbank-to-fromfile.py -F {input.filelist} -o {output.csv} \
               -t {input.taxonomy} --picklist ncbi-picklist.csv:ident:ident
-        sourmash sketch fromfile {output.csv} --output-commands - \
+        sourmash sketch fromfile {output.csv} \
               -p dna -p protein
+     """
+
+rule test_genbank_3_output_manifest:
+     input:
+        script = "genbank-to-fromfile.py",
+        csv = "test-genbank.csv",
+        zip = "test-genbank.zip",
+     output:
+        mf = "test-genbank.mf.csv"
+     shell: """
+        sourmash sketch fromfile {input.csv} --already {input.zip} \
+              -p dna -p protein --output-manifest {output.mf}
      """
 
 rule test_fasta_1:
