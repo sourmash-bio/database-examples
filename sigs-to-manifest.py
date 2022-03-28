@@ -19,6 +19,7 @@ def main():
     previous_filenames = set()
     previous = CollectionManifest([])
     if args.previous:
+        notify(f"loading previous manifest from '{args.previous}'")
         previous = CollectionManifest.load_from_filename(args.previous)
 
         for row in previous.rows:
@@ -30,7 +31,7 @@ def main():
     n_files = 0
     n_skipped = 0
 
-    for filename in args.pathlist:
+    for filename in set(args.pathlist):
         notify(f"Loading filenames from {filename}.")
         n_loaded = 0
         with open(filename, 'rt') as fp:
