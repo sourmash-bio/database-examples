@@ -6,3 +6,5 @@ trying out better database construction approaches, a la
 ## Examples
 
 See [an example of building a private database](./example.private/).
+
+Another example: [building protein and DNA databases starting from genomes](./example.private+protein).

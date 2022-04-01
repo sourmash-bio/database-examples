@@ -88,8 +88,8 @@ def main():
 
         previous = fileinfo_d.get(fileinfo.ident)
         if previous is not None:
-            print("(merging into existing record '{fileinfo.ident}' moltype={moltype})")
-            fileinfo = fileinfo.merge(previous)
+            print(f"(merging into existing record '{fileinfo.ident}' moltype={moltype})")
+            fileinfo = previous.merge(fileinfo)
         else:
             print(f"(new record for identifier '{fileinfo.ident}' moltype={moltype})")
 

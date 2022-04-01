@@ -62,8 +62,8 @@ class InputFile(object):
 
     def merge(self, other):
         assert self.ident == other.ident
-        assert self.full_ident == other.full_ident
-        assert self.name == other.name
+        #assert self.full_ident == other.full_ident
+        #assert self.name == other.name
 
         if (self.genome_filename and other.genome_filename):
             raise ValueError("duplicate genome filename")
