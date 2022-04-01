@@ -17,9 +17,10 @@ def main():
     args = p.parse_args()
 
     previous_filenames = set()
+    previous = CollectionManifest([])
     if args.previous:
-        with open(args.previous, newline='') as fp:
-            previous = CollectionManifest.load_from_csv(fp)
+        notify(f"loading previous manifest from '{args.previous}'")
+        previous = CollectionManifest.load_from_filename(args.previous)
 
         for row in previous.rows:
             previous_filenames.add(row['internal_location'])
@@ -27,33 +28,39 @@ def main():
         notify(f"loaded {len(previous)} rows with {len(previous_filenames)} distinct sig files from '{args.previous}'")
 
     rows = []
-    for filename in args.pathlist:
+    n_files = 0
+    n_skipped = 0
+
+    for filename in set(args.pathlist):
         notify(f"Loading filenames from {filename}.")
         n_loaded = 0
         with open(filename, 'rt') as fp:
             for loc in fp:
+                if n_files and n_files % 100 == 0:
+                    notify(f'... loaded {n_files} files, skipped {n_skipped}; {n_loaded} sigs', end='\r')
                 loc = loc.strip()
+
                 if loc in previous_filenames:
+                    n_skipped += 1
                     continue
 
                 for ss in sourmash.load_file_as_signatures(loc):
-                    if n_loaded % 100 == 0:
-                        notify(f'... {n_loaded}', end='\r')
                     row = CollectionManifest.make_manifest_row(ss,
                                                                loc,
                                                                include_signature=False)
                     rows.append(row)
                     n_loaded += 1
 
-        notify(f"Loaded {n_loaded} sigs => manifest from {filename}")
+                n_files += 1
+
+        notify(f"Loaded {n_loaded} manifest rows from files in '{filename}'")
 
     if args.merge_previous:
         notify(f"merging {len(previous.rows)} previous rows into current.")
         rows.extend(previous.rows)
 
     m = CollectionManifest(rows)
-    with open(args.output, 'w', newline='') as outfp:
-        m.write_to_csv(outfp, write_header=True)
+    m.write_to_filename(args.output)
 
     notify(f"saved {len(m)} manifest rows to '{args.output}'")
 
