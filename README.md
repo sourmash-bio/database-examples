@@ -1,7 +1,8 @@
 # 2022-sourmash-sketchfrom
 
 This repository contains examples, demonstrations, and support scripts
-for building custom sourmash databases, using
+for building custom [sourmash](https://github.com/dib-lab/sourmash/)
+databases, using
 [the new `sourmash sketch fromfile` command](https://github.com/sourmash-bio/sourmash/pull/1885)
 and related additions to sourmash.
 
