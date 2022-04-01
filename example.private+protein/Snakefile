@@ -1,0 +1,19 @@
+import glob, os.path
+
+FILENAMES=glob.glob('podar-ref/*.fa')
+FILENAMES = [ os.path.splitext(f)[0] for f in FILENAMES ]
+FILENAMES = [ os.path.basename(f) for f in FILENAMES ]
+print(FILENAMES)
+
+rule all:
+    input:
+        expand("podar-ref/{g}_protein.faa", g=FILENAMES)
+
+rule make_prots:
+    input:
+        "{filename}.fa"
+    output:
+        "{filename}_protein.faa"
+    shell: """
+        prodigal -i {input} -a {output}
+    """

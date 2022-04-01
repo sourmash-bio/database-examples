@@ -11,7 +11,7 @@ podar-ref/:
 	rm podar-ref/podar-ref.tar.gz
 
 # make proteins with prodigal
-podar-ref/1_protein.faa:
+podar-ref/1_protein.faa: podar-ref/
 	snakemake -j 4
 
 # build a 'fromfile' for sourmash to use
