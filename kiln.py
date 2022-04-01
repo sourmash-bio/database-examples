@@ -7,9 +7,10 @@ import os
 
 
 def check_dna(seq):
+    orig_seq = seq
     for ch in 'ACGTN':
         seq = seq.replace(ch, '')
-    if len(seq):
+    if len(seq) > 0.1 * len(orig_seq):
         return False
     return True
 
