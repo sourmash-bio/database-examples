@@ -1,0 +1,15 @@
+FILENAMES=glob_wildcards('{g}_genomic.fna').g
+print(FILENAMES)
+
+rule all:
+    input:
+        expand("{g}_protein.faa", g=FILENAMES)
+
+rule make_prots:
+    input:
+        "{filename}_genomic.fna"
+    output:
+        "{filename}_protein.faa"
+    shell: """
+        prodigal -i {input} -a {output}
+    """

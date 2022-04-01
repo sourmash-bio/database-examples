@@ -15,6 +15,8 @@ See [an example of building a private database](./example.private/).
 
 Another example: [building protein and DNA databases starting from genomes](./example.private+protein).
 
+[Building a DNA+protein database from an NCBI genome assembly file](./example.ncbi-assemblies+protein).
+
 ## Scripts and code
 
 * `fasta-to-fromfile.py` - build a `fromfile` CSV file from a list of FASTA files.
