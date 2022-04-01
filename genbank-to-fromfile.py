@@ -10,7 +10,6 @@ import os
 import shutil
 from kiln import InputFile, OutputRecords
 
-from sourmash.tax.tax_utils import MultiLineageDB
 from sourmash.logging import error, notify
 from sourmash.cli.utils import add_picklist_args
 from sourmash import sourmash_args
@@ -18,10 +17,10 @@ from sourmash.picklist import PickStyle
 
 
 usage = """
-
-
-   ./genbank-to-fromfile.py filenames -o <out.csv> -t <taxonomy db>
+   ./genbank-to-fromfile.py filenames -o <out.csv> -S <assembly_summary>
 """
+
+assembly_summary_fieldnames = "assembly_accession	bioproject	biosample	wgs_master	refseq_category	taxid	species_taxid	organism_name	infraspecific_name	isolate	version_status	assembly_level	release_type	genome_rep	seq_rel_date	asm_name	submitter	gbrs_paired_asm	paired_asm_comp	ftp_path	excluded_from_refseq	relation_to_type_material	asm_not_live_date".split("\t")
 
 
 def main():
@@ -31,15 +30,14 @@ def main():
                    help='text files with filenames to add to command line',)
     p.add_argument('-o', '--output-csv', required=True,
                    help="output CSV file")
-    p.add_argument('-t', '--taxonomy-db', action='append', default=[],
-                   required=True,
-                   help="one or more sourmash taxonomy database(s)")
     p.add_argument('-v', '--verbose', action='store_true',
                    help='turn on more extensive output')
     p.add_argument('--strict', action='store_true',
                    help='turn on strict success mode')
     p.add_argument('-R', '--report-errors-to',
                    help='output errors to this file; default <csv>.report.txt')
+    p.add_argument('-S', '--assembly-summary-file',
+                   help='assembly_summary.txt format file from NCBI')
     add_picklist_args(p)
     args = p.parse_args()
 
@@ -85,24 +83,22 @@ def main():
                     return True
             return False
 
-    # load taxonomy ID
-    tax_info = MultiLineageDB.load(args.taxonomy_db,
-                                   keep_full_identifiers=False)
-    def get_name(ident, full_ident):
-        """
-        Use taxonomy to name things in GenBank/GTDB style.
-        """
-        # get lineage
-        lineage = tax_info[ident]
-        x = list(lineage)
+    # load assembly summary
+    assembly_info = {}
+    with open(args.assembly_summary_file, newline="") as fp:
+        r = csv.DictReader(fp, delimiter='\t',
+                           fieldnames=assembly_summary_fieldnames)
+        for row in r:
+            if row['assembly_accession'].startswith('#'):
+                continue
 
-        # remove to last non-empty name
-        while not x[-1].name:
-            x.pop()
+            acc = row['assembly_accession']
+            org_name = row['organism_name']
 
-        # ...use that name.
-        name = x[-1].name
-        return f"{full_ident} {name}"
+            full_name = f"{acc} {org_name}"
+            assembly_info[acc] = full_name
+
+    notify(f"Loaded {len(assembly_info)} rows from '{args.assembly_summary_file}'")
 
     # all the output.
     output = OutputRecords(args.output_csv)
@@ -157,7 +153,7 @@ def main():
 
         fileinfo.ident = ident
         fileinfo.full_ident = full_ident
-        fileinfo.name = get_name(ident, full_ident)
+        fileinfo.name = assembly_info[full_ident]
 
         # this may require refinement?
         if filename.endswith('.faa.gz') or filename.endswith('.faa'):
