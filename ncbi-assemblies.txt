@@ -1,2 +1,2 @@
-ncbi-assemblies/GCF_000018865.1_ASM1886v1_genomic.fna.gz
-ncbi-assemblies/GCF_000018865.1_ASM1886v1_protein.faa.gz
+example.ncbi-assemblies/GCF_000018865.1_ASM1886v1_genomic.fna.gz
+example.ncbi-assemblies/GCF_000018865.1_ASM1886v1_protein.faa.gz
