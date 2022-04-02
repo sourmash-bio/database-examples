@@ -1,4 +1,4 @@
-# 2022-sourmash-sketchfrom
+# database-examples
 
 This repository contains examples, demonstrations, and support scripts
 for building custom [sourmash](https://github.com/dib-lab/sourmash/)
@@ -7,7 +7,7 @@ databases, using
 and related additions to sourmash.
 
 See [sourmash#1671](https://github.com/sourmash-bio/sourmash/issues/1671) for
-the overall discussion.
+the overall discussion about building databases.
 
 ## Examples
 
