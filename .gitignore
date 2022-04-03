@@ -6,3 +6,5 @@ __pycache__
 *.db
 *.sig
 .snakemake
+test-genbank-pick.csv.error-report.txt
+test-genbank.csv.error-report.txt

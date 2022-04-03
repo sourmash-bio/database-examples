@@ -1,4 +1,4 @@
-# database-examples
+# Examples workflows for building sourmash databases
 
 This repository contains examples, demonstrations, and support scripts
 for building custom [sourmash](https://github.com/dib-lab/sourmash/)
@@ -14,6 +14,8 @@ the overall discussion about building databases.
 See [an example of building a private database](./example.private/).
 
 Another example: [building protein and DNA databases starting from genomes](./example.private+protein).
+
+[Building a DNA+protein database from the NCBI genome assembly & proteome files](./example.ncbi-assemblies).
 
 [Building a DNA+protein database from an NCBI genome assembly file](./example.ncbi-assemblies+protein).
 
