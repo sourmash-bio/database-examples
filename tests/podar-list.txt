@@ -1,0 +1,2 @@
+../podar-ref/1.fa
+../podar-ref/2.fa

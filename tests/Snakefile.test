@@ -9,14 +9,14 @@ rule all:
 
 rule test_genbank:
      input:
-        script = "genbank-to-fromfile.py",
+        script = "../genbank-to-fromfile.py",
         filelist = "ncbi-assemblies.txt",
-        assem = "example.ncbi-assemblies/assembly_summary.txt"
+        assem = "../example.ncbi-assemblies/assembly_summary.txt"
      output:
         csv = "test-genbank.csv",
         zip = "test-genbank.zip",
      shell: """
-        ./genbank-to-fromfile.py -F {input.filelist} -o {output.csv} \
+        ../genbank-to-fromfile.py -F {input.filelist} -o {output.csv} \
               -S {input.assem}
         sourmash sketch fromfile {output.csv} -o {output.zip} \
               -p dna -p protein
@@ -24,14 +24,14 @@ rule test_genbank:
 
 rule test_genbank_2_picklist:
      input:
-        script = "genbank-to-fromfile.py",
+        script = "../genbank-to-fromfile.py",
         filelist = "ncbi-assemblies.txt",
         picklist = "ncbi-picklist.csv",
-        assem = "example.ncbi-assemblies/assembly_summary.txt"
+        assem = "../example.ncbi-assemblies/assembly_summary.txt"
      output:
         csv = "test-genbank-pick.csv"
      shell: """
-        ./genbank-to-fromfile.py -F {input.filelist} -o {output.csv} \
+        ../genbank-to-fromfile.py -F {input.filelist} -o {output.csv} \
               -S {input.assem} --picklist ncbi-picklist.csv:ident:ident
         sourmash sketch fromfile {output.csv} \
               -p dna -p protein
@@ -39,7 +39,7 @@ rule test_genbank_2_picklist:
 
 rule test_genbank_3_output_manifest:
      input:
-        script = "genbank-to-fromfile.py",
+        script = "../genbank-to-fromfile.py",
         csv = "test-genbank.csv",
         zip = "test-genbank.zip",
      output:
@@ -51,23 +51,23 @@ rule test_genbank_3_output_manifest:
 
 rule test_fasta_1:
      input:
-        script = "fasta-to-fromfile.py",
+        script = "../fasta-to-fromfile.py",
         filelist = "podar-list.txt",
      output:
         csv = "test-fasta-1.csv"
      shell: """
-        ./fasta-to-fromfile.py -F podar-list.txt -o {output.csv}
+        ../fasta-to-fromfile.py -F podar-list.txt -o {output.csv}
         sourmash sketch fromfile {output.csv} \
               -p dna
      """
 
 rule test_fasta_2:
      input:
-        script = "fasta-to-fromfile.py",
+        script = "../fasta-to-fromfile.py",
      output:
         csv = "test-fasta-2.csv"
      shell: """
-        ./fasta-to-fromfile.py podar-ref/[12].fa -o {output.csv} \
+        ../fasta-to-fromfile.py ../podar-ref/[12].fa -o {output.csv} \
             --ident-from-filename
         sourmash sketch fromfile {output.csv} \
               -p dna
