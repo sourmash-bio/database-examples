@@ -67,7 +67,7 @@ rule test_fasta_2:
      output:
         csv = "test-fasta-2.csv"
      shell: """
-        ../fasta-to-fromfile.py ../podar-ref/[12].fa -o {output.csv} \
+        ../fasta-to-fromfile.py podar-ref/[12].fa -o {output.csv} \
             --ident-from-filename
         sourmash sketch fromfile {output.csv} \
               -p dna
