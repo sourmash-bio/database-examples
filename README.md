@@ -25,4 +25,5 @@ Another example: [building protein and DNA databases starting from genomes](./ex
 * `genbank-to-fromfile.py` - build a `fromfile` CSV file from a list of FASTA files downloaded from Genbank
 * `kiln.py` - support library for building `fromfile` CSVs.
 * `mass-rename.py` - a script to bulk-rename sourmash signatures.
+* `mass-merge.py` - a script to bulk-merge sourmash signatures by spreadsheet column attribute.
 * `sigs-to-manifest.py` - a script to extract and/or update sourmash manifests from many databases.
