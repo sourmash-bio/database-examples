@@ -108,48 +108,55 @@ def massmerge(args):
             if m % 100 == 0:
                 merge_percent = float(n)/len(found_idents) * 100
                 notify(f"...merging sigs for {merge_name} ({merge_percent:.1f}% of sigs merged)", end="\r")
-            # if singleton, just rename
-            if len(idents) == 1:
-                n_singletons+=1
+
             # build a new picklist for idents to be merged
             ident_picklist = SignaturePicklist('ident')
             ident_picklist.pickset = set(idents)
 
-            # loop through each idx (db), select sigs, merge mh
-            first_sig = None
-            mh = None
-            merged_ss = None
-            for idx in idx_list:
-                this_idx = idx.select(picklist=ident_picklist)
-                for ss in this_idx.signatures():
-                    n += 1
-                    # first sig? initialize some things
-                    if first_sig is None:
-                        first_sig = ss
-                        mh = first_sig.minhash.copy_and_clear()
+            # if singleton, just rename
+            if len(idents) == 1:
+                n_singletons+=1
+                this_idx = idx_list[0].select(picklist=ident_picklist)
+                ss = next(this_idx.signatures())
+                ss._name = merge_name
+                save_sigs.add(ss)
+                n+=1
+            else:
+                # otherwise, loop through each idx (db), select sigs, merge mh
+                first_sig = None
+                mh = None
+                merged_ss = None
+                for idx in idx_list:
+                    this_idx = idx.select(picklist=ident_picklist)
+                    for ss in this_idx.signatures():
+                        n += 1
+                        # first sig? initialize some things
+                        if first_sig is None:
+                            first_sig = ss
+                            mh = first_sig.minhash.copy_and_clear()
 
-                        # forcibly remove abundance?
-                        if args.flatten:
-                            mh.track_abundance = False
+                            # forcibly remove abundance?
+                            if args.flatten:
+                                mh.track_abundance = False
 
-                    try:
-                        sigobj_mh = ss.minhash
-                        if not args.flatten:
-                            _check_abundance_compatibility(first_sig, ss)
-                        else:
-                            sigobj_mh.track_abundance = False
+                        try:
+                            sigobj_mh = ss.minhash
+                            if not args.flatten:
+                                _check_abundance_compatibility(first_sig, ss)
+                            else:
+                                sigobj_mh.track_abundance = False
 
-                        mh.merge(sigobj_mh)
-                    except (TypeError, ValueError) as exc:
-                        error(f"ERROR when merging signature '{ss}' ({ss.md5sum()[:8]})")
-                        error(str(exc))
-                        sys.exit(-1)
+                            mh.merge(sigobj_mh)
+                        except (TypeError, ValueError) as exc:
+                            error(f"ERROR when merging signature '{ss}' ({ss.md5sum()[:8]})")
+                            error(str(exc))
+                            sys.exit(-1)
 
+                # create merged sig and write to output
+                merged_ss = sourmash.SourmashSignature(mh, name=merge_name)
+                save_sigs.add(merged_ss)
             merge_percent = float(n)/len(found_idents) * 100
             notify(f"...merged {len(idents)} sigs for {merge_name} ({merge_percent:.1f}% of sigs merged)", end="\r")
-            # create merged sig and write to output
-            merged_ss = sourmash.SourmashSignature(mh, name=merge_name)
-            save_sigs.add(merged_ss)
 
         notify(f"merged {n} signatures into {len(save_sigs)} signatures by column: {merge_col}")
         notify(f"  of these, {n_singletons} were singletons (no merge; just renamed)")
