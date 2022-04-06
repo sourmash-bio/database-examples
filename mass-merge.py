@@ -48,7 +48,8 @@ def massmerge(args):
                     if not merge_col in r.fieldnames:
                         error(f"ERROR on spreadsheet '{filename}'.")
                         error(f"Merge column {merge_col} is not present.")
-                        sys.exit(-1)            
+                        sys.exit(-1)
+                    first_entry=False
                 merge_name = row[merge_col]
                 ident = row['ident']
                 
@@ -78,12 +79,12 @@ def massmerge(args):
 
         ident_picklist = SignaturePicklist('ident')
         ident_picklist.pickset = all_idents
-
         check_idx = idx.select(ksize=args.ksize,
-                            moltype=moltype,
-                            picklist=ident_picklist)
+                                moltype=moltype,
+                                picklist=ident_picklist)
+        # do we need to do any checks for duplicate idents between dbs?
         found_idents.update(ident_picklist.found)
-        idx_list.append(idx)
+        idx_list.append(check_idx)
 
     # make sure that we get all the things.
     if not all_idents.issubset(found_idents):
@@ -104,13 +105,12 @@ def massmerge(args):
         n=0
         n_singletons = 0
         for m, (merge_name, idents) in enumerate(merge_d.items()):
-            # keep count of singletons
-            if len(idents) == 1:
-                n_singletons+=1
             if m % 100 == 0:
                 merge_percent = float(n)/len(found_idents) * 100
                 notify(f"...merging sigs for {merge_name} ({merge_percent:.1f}% of sigs merged)", end="\r")
-
+            # if singleton, just rename
+            if len(idents) == 1:
+                n_singletons+=1
             # build a new picklist for idents to be merged
             ident_picklist = SignaturePicklist('ident')
             ident_picklist.pickset = set(idents)
@@ -120,9 +120,7 @@ def massmerge(args):
             mh = None
             merged_ss = None
             for idx in idx_list:
-                this_idx = idx.select(ksize=args.ksize,
-                                moltype=moltype,
-                                picklist=ident_picklist)
+                this_idx = idx.select(picklist=ident_picklist)
                 for ss in this_idx.signatures():
                     n += 1
                     # first sig? initialize some things
@@ -143,8 +141,7 @@ def massmerge(args):
 
                         mh.merge(sigobj_mh)
                     except (TypeError, ValueError) as exc:
-                        error("ERROR when merging signature '{}' ({}) from file {}",
-                            ss, ss.md5sum()[:8])
+                        error(f"ERROR when merging signature '{ss}' ({ss.md5sum()[:8]})")
                         error(str(exc))
                         sys.exit(-1)
 
@@ -167,8 +164,7 @@ def main():
         help='suppress non-error output'
     )
     p.add_argument(
-        '--flatten', action='store_true',
-        help='remove abundances from all signatures while merging'
+        '-d', '--debug', action='store_true',
     )
     p.add_argument(
         '--merge-col', required=True,
@@ -177,6 +173,10 @@ def main():
     p.add_argument(
         '-o', '--output', metavar='FILE', default='-',
         help='output signature to this file (default stdout)'
+    )
+    p.add_argument(
+        '--flatten', action='store_true',
+        help='remove abundances from all signatures while merging'
     )
     p.add_argument(
         '-f', '--force', action='store_true',
