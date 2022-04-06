@@ -29,9 +29,9 @@ def _check_abundance_compatibility(sig1, sig2):
 
 def massmerge(args):
     """
-    rename one or more signatures.
+    merge one or more signatures based on a specified column.
     """
-    set_quiet(args.quiet, args.quiet)
+    set_quiet(args.quiet, args.debug)
     moltype = sourmash_args.calculate_moltype(args)
     merge_col = args.merge_col
 
