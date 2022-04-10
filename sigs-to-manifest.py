@@ -75,11 +75,13 @@ def main():
         return 0
 
     if args.merge_previous:
-        notify(f"merging {len(previous.rows)} previous rows into current.")
+        # note, this is important for CSV manifests, but not for SQL manifests.
+        notify(f"merging previous rows into current.")
         rows.extend(previous.rows)
 
     m = CollectionManifest(rows)
-    m.write_to_filename(args.output, database_format=args.database_format)
+    m.write_to_filename(args.output, database_format=args.database_format,
+                        ok_if_exists=args.merge_previous)
 
     notify(f"saved {len(m)} manifest rows to '{args.output}'")
 
