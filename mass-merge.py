@@ -179,7 +179,7 @@ def main():
     )
     p.add_argument(
         '-o', '--output', metavar='FILE', default='-',
-        help='output signature to this file (default stdout)'
+        help='output merged database to this file (default stdout)'
     )
     p.add_argument(
         '--flatten', action='store_true',
