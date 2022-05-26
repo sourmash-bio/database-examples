@@ -52,7 +52,7 @@ def massmerge(args):
                     first_entry=False
                 merge_name = row[merge_col]
                 ident = row['ident']
-                
+
                 assert ' ' not in ident, f"identifiers cannot have spaces - but '{ident}' does."
                 assert ident not in all_idents, f"duplicate identifer: '{ident}'"
                 all_idents.add(ident)
@@ -105,6 +105,9 @@ def massmerge(args):
         n=0
         n_singletons = 0
         for m, (merge_name, idents) in enumerate(merge_d.items()):
+            # identifiers can't have spaces
+            merge_name = merge_name.replace(" ", "_")
+
             if m % 100 == 0:
                 merge_percent = float(n)/len(found_idents) * 100
                 notify(f"...merging sigs for {merge_name} ({merge_percent:.1f}% of sigs merged)", end="\r")
